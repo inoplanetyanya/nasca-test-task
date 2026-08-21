@@ -16,6 +16,10 @@ RUN pip install --no-cache-dir --user -r requirements.txt
 # --- Этап 2: Финальный легковесный образ ---
 FROM python:3.12-slim AS runner
 
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
 WORKDIR /app
 
 # Создаем системного пользователя без прав root для безопасности
