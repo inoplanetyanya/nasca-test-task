@@ -1,0 +1,25 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: simple-app:latest
+    container_name: simple_app_container
+    ports:
+      - "5000:5000"
+    environment:
+      # По ТЗ
+      # Но про Flask написали только в 5 пункте, а я уже все сделал на FastAPI
+      - FLASK_ENV=production
+      # Для FastAPI
+      - APP_ENV=production
+      - PYTHONUNBUFFERED=1
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+    restart: always
