@@ -1,7 +1,7 @@
-from typing import Optional
+import os
+
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
-import os
 
 APP_ENV = os.getenv("APP_ENV", "development")
 app = FastAPI(title=f"Simple app API [{APP_ENV.upper()}]")
@@ -27,7 +27,7 @@ class UserCreate(BaseModel):
     name: str = Field(..., min_length=2, max_length=50, pattern=r"^[А-Яа-яЁёA-Za-z]+$")
     surname: str = Field(..., min_length=2, max_length=50, pattern=r"^[А-Яа-яЁёA-Za-z]+$")
     requiredField: str = Field(..., min_length=1, max_length=100)
-    optionalField: Optional[str] = Field(None, max_length=255)
+    optionalField: str | None = Field(None, max_length=255)
 
 
 @app.get("/")
