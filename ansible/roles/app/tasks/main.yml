@@ -17,17 +17,10 @@
       - "--exclude=.pytest_cache"
 
 - name: Start application via Docker Compose
-  docker_compose_v2:
-    project_src: /opt/simple-app
-    state: present
-    build: always
+  shell:
+    cmd: "docker compose up -d --build"
+    chdir: /opt/simple-app
   register: compose_output
-
-- name: Check that container is running
-  assert:
-    that:
-      - "compose_output.services.app.simple_app_container.state.running == true"
-    fail_msg: "Container is not running!"
 
 - name: Wait for Health Endpoint to respond 200 OK
   uri:

@@ -49,7 +49,7 @@ compose-logs: ## Просмотреть логи Docker Compose
 	docker compose logs -f app
 
 ansible-check: ## Проверить синтаксис Ansible playbook
-	docker run --rm -v "$(CURDIR)":/ansible -w /ansible alpine/ansible ansible-playbook --syntax-check -i $(INVENTORY) $(PLAYBOOK)
+	docker run --rm -v "$(CURDIR)":/ansible -w /ansible alpine/ansible ansible-playbook -i $(INVENTORY) $(PLAYBOOK) --syntax-check
 
 ansible-dry: ## Начать dry-run Ansible (имитация деплоя)
 	docker run --rm -v "$(CURDIR)":/ansible -w /ansible alpine/ansible ansible-playbook -i $(INVENTORY) $(PLAYBOOK) --check
