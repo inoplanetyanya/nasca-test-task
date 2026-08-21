@@ -55,17 +55,20 @@ jobs:
           docker compose up -d
           
           echo "Waiting for container to become healthy..."
-          # Динамический цикл ожидания статуса healthy (максимум 60 секунд)
+          
+          # Цикл ожидания (максимум 60 секунд)
           for i in {1..12}; do
-            STATUS=$(docker compose ps --format json | grep -o '"HealthStatus":"[^"]*"' | cut -d'"' -f4 || echo "starting")
-            echo "Current status: $STATUS"
+            # Проверяем, есть ли контейнер с именем simple_app_container и статусом healthy
+            # Если он healthy, команда вернет его имя. Если нет — вернет пустоту.
+            HEALTH_CHECK=$(docker ps --filter "name=simple_app_container" --filter "health=healthy" --format "{{.Names}}")
             
-            if [ "$STATUS" = "healthy" ]; then
+            if [ -n "$HEALTH_CHECK" ]; then
               echo "Success: Container is healthy!"
               docker compose down
               exit 0
             fi
             
+            echo "Container is not ready yet, retrying in 5 seconds (attempt $i/12)..."
             sleep 5
           done
           
@@ -73,6 +76,11 @@ jobs:
           echo "Error: Container failed to become healthy in time."
           echo "=== Docker Compose Logs ==="
           docker compose logs
+          
+          # Показываем детальный лог хелсчека из инспекта, чтобы сразу увидеть ошибку в UI GitHub
+          echo "=== Detailed Healthcheck Output ==="
+          docker inspect simple_app_container --format='{{json .State.Health.Log}}'
+          
           docker compose down
           exit 1
 
