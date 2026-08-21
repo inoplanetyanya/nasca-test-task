@@ -19,7 +19,7 @@ services:
     volumes:
       - ./scripts/server-info.sh:/app/server-info.sh:ro
     healthcheck:
-      test: ["CMD", "bash", "/app/server-info.sh", "http://localhost:${CONTAINER_PORT}/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:${CONTAINER_PORT}/health"]
       interval: 10s
       timeout: 5s
       retries: 3
