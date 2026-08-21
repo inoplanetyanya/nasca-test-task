@@ -1,7 +1,23 @@
+# Запрещаем Git Bash на Windows искажать пути в Docker-командах
+export MSYS_NO_PATHCONV=1
+
 # Автоматически загружаем переменные из .env файла, если он существует
 ifneq (,$(wildcard ./.env))
     include .env
     export
+endif
+
+# Кроссплатформенное определение путей к виртуальному окружению (Windows vs Linux)
+ifeq ($(OS),Windows_NT)
+    VENV_BIN = .venv/Scripts
+    PYTHON = $(VENV_BIN)/python.exe
+    PIP = $(VENV_BIN)/pip.exe
+    UVICORN = $(VENV_BIN)/uvicorn.exe
+else
+    VENV_BIN = .venv/bin
+    PYTHON = $(VENV_BIN)/python
+    PIP = $(VENV_BIN)/pip
+    UVICORN = $(VENV_BIN)/uvicorn
 endif
 
 .PHONY: help install lint test run server-info docker-build docker-run docker-stop compose-up compose-down compose-logs ansible-check ansible-dry ansible-run
@@ -11,19 +27,22 @@ help: ## Показать все команды
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2}'
 
 install: ## Установить зависимости Python
-	pip install -r app/requirements.txt
+	python -m venv .venv
+	$(PYTHON) -m pip install --upgrade pip
+	$(PIP) install -r app/requirements.txt
+	@echo "Окружение создано успешно."
 
-lint: ## Проверить качество кода (ruff для Python, shellcheck для Bash)
+lint: install ## Проверить качество кода (ruff для Python, shellcheck для Bash)
 	@echo "=== Линтинг Python (ruff) ==="
-	python -m ruff check app/ || pip install ruff && python -m ruff check app/
+	$(PYTHON) -m ruff check app/ $(ARGS)
 	@echo "=== Линтинг Bash (shellcheck) ==="
 	docker run --rm -v "$(CURDIR)":/apps -w /apps koalaman/shellcheck scripts/server-info.sh
 
-test: ## Запустить автоматические тесты
-	PYTHONPATH=. python -m pytest
+test: install ## Запустить автоматические тесты
+	PYTHONPATH=. $(PYTHON) -m pytest
 
 run: ## Запустить приложение локально на хосте (разработка)
-	python -m uvicorn app.main:app --reload --host 0.0.0.0 --port $(CONTAINER_PORT)
+	$(UVICORN) app.main:app --reload --host 0.0.0.0 --port $(CONTAINER_PORT)
 
 server-info: ## Запустить Bash-скрипт диагностики сервера
 	chmod +x scripts/server-info.sh
