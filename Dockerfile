@@ -48,4 +48,4 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
 USER appuser
 
 # Запуск через gunicorn с uvicorn-воркерами
-CMD ["gunicorn", "main:app", "--workers", "4", "--worker-class", "uvicorn.workers.UvicornWorker", "--bind", "0.0.0.0:${APP_PORT}"]
+CMD gunicorn main:app --workers 4 --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:${APP_PORT}
