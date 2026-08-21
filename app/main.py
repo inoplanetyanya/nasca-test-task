@@ -1,8 +1,10 @@
 from typing import Optional
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
+import os
 
-app = FastAPI(title="Simple API")
+APP_ENV = os.getenv("APP_ENV", "development")
+app = FastAPI(title=f"Simple Junior DevOps API [{APP_ENV.upper()}]")
 
 users_db = [
     {

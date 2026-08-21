@@ -3,19 +3,23 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    image: simple-app:latest
-    container_name: simple_app_container
+      args:
+        - APP_PORT=${CONTAINER_PORT}
+    image: ${IMAGE_NAME}:${IMAGE_TAG}
+    container_name: ${CONTAINER_NAME}
     ports:
-      - "5000:5000"
+      - "${HOST_PORT}:${CONTAINER_PORT}"
     environment:
-      # По ТЗ
-      # Но про Flask написали только в 5 пункте, а я уже все сделал на FastAPI
-      - FLASK_ENV=production
-      # Для FastAPI
-      - APP_ENV=production
-      - PYTHONUNBUFFERED=1
+        # По ТЗ
+        # Но про Flask написали только в 5 пункте, а я уже все сделал на FastAPI
+      - FLASK_ENV=${APP_ENV}
+        # Для FastAPI
+      - APP_ENV=${APP_ENV}
+      - PYTHONUNBUFFERED=${PYTHONUNBUFFERED}
+    volumes:
+      - ./scripts/server-info.sh:/app/server-info.sh:ro
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      test: ["CMD", "bash", "/app/server-info.sh", "http://localhost:${CONTAINER_PORT}/health"]
       interval: 10s
       timeout: 5s
       retries: 3

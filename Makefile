@@ -1,8 +1,8 @@
-# Переменные проекта
-IMAGE_NAME = simple-app:latest
-CONTAINER_NAME = simple_app_container
-PLAYBOOK = ansible/playbook.yml
-INVENTORY = ansible/inventory.ini
+# Автоматически загружаем переменные из .env файла, если он существует
+ifneq (,$(wildcard ./.env))
+    include .env
+    export
+endif
 
 .PHONY: help install lint test run server-info docker-build docker-run docker-stop compose-up compose-down compose-logs ansible-check ansible-dry ansible-run
 
@@ -23,17 +23,17 @@ test: ## Запустить автоматические тесты
 	PYTHONPATH=. python -m pytest
 
 run: ## Запустить приложение локально на хосте (разработка)
-	python -m uvicorn app.main:app --reload --host 0.0.0.0 --port 5000
+	python -m uvicorn app.main:app --reload --host 0.0.0.0 --port $(CONTAINER_PORT)
 
 server-info: ## Запустить Bash-скрипт диагностики сервера
 	chmod +x scripts/server-info.sh
-	./scripts/server-info.sh http://localhost:5000/health
+	./scripts/server-info.sh http://localhost:$(HOST_PORT)/health
 
 docker-build: ## Собрать Docker образ
-	docker build -t $(IMAGE_NAME) .
+	docker build --build-arg APP_PORT=$(CONTAINER_PORT) -t $(IMAGE_NAME):$(IMAGE_TAG) .
 
-docker-run: docker-stop ## Запустить Docker контейнер вручную (с очисткой старого)
-	docker run -d -p 5000:5000 --name $(CONTAINER_NAME) $(IMAGE_NAME)
+docker-run: docker-stop ## Запустить Docker контейнер вручную
+	docker run -d -p $(HOST_PORT):$(CONTAINER_PORT) --name $(CONTAINER_NAME) $(IMAGE_NAME):$(IMAGE_TAG)
 
 docker-stop: ## Остановить и удалить созданный вручную Docker контейнер
 	docker stop $(CONTAINER_NAME) 2>/dev/null || true
@@ -49,10 +49,10 @@ compose-logs: ## Просмотреть логи Docker Compose
 	docker compose logs -f app
 
 ansible-check: ## Проверить синтаксис Ansible playbook
-	docker run --rm -v "$(CURDIR)":/ansible -w /ansible alpine/ansible ansible-playbook -i $(INVENTORY) $(PLAYBOOK) --syntax-check
+	docker run --rm -v "$(CURDIR)":/ansible -w /ansible alpine/ansible ansible-playbook -i $(INVENTORY) $(PLAYBOOK) --syntax-check --extra-vars "DEPLOY_DIR=$(DEPLOY_DIR) APP_PORT=$(CONTAINER_PORT)"
 
 ansible-dry: ## Начать dry-run Ansible (имитация деплоя)
-	docker run --rm -v "$(CURDIR)":/ansible -w /ansible alpine/ansible ansible-playbook -i $(INVENTORY) $(PLAYBOOK) --check
+	docker run --rm -v "$(CURDIR)":/ansible -w /ansible alpine/ansible ansible-playbook -i $(INVENTORY) $(PLAYBOOK) --check --extra-vars "DEPLOY_DIR=$(DEPLOY_DIR) APP_PORT=$(CONTAINER_PORT)"
 
 ansible-run: ## Запустить реальный Ansible playbook
-	docker run --rm -v "$(CURDIR)":/ansible -w /ansible alpine/ansible ansible-playbook -i $(INVENTORY) $(PLAYBOOK)
+	docker run --rm -v "$(CURDIR)":/ansible -w /ansible alpine/ansible ansible-playbook -i $(INVENTORY) $(PLAYBOOK) --extra-vars "DEPLOY_DIR=$(DEPLOY_DIR) APP_PORT=$(CONTAINER_PORT)"

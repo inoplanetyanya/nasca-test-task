@@ -1,7 +1,7 @@
 ---
-- name: Create project directory /opt/simple-app
+- name: Create project directory
   file:
-    path: /opt/simple-app
+    path: "{{ DEPLOY_DIR }}"
     state: directory
     mode: '0755'
     owner: "{{ ansible_user }}"
@@ -10,7 +10,7 @@
 - name: Copy project files to server
   synchronize:
     src: "../"
-    dest: /opt/simple-app/
+    dest: "{{ DEPLOY_DIR }}/"
     rsync_opts:
       - "--exclude=.git"
       - "--exclude=__pycache__"
@@ -19,12 +19,12 @@
 - name: Start application via Docker Compose
   shell:
     cmd: "docker compose up -d --build"
-    chdir: /opt/simple-app
+    chdir: "{{ DEPLOY_DIR }}"
   register: compose_output
 
-- name: Wait for Health Endpoint to respond 200 OK
+- name: Wait for Health Endpoint to respond
   uri:
-    url: "http://localhost:5000/health"
+    url: "http://localhost:{{ APP_PORT }}/health"
     status_code: 200
   retries: 6
   delay: 5
