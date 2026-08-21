@@ -1,0 +1,16 @@
+# Скомпилированный байт-код Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Папки тестов и окружения
+.pytest_cache/
+.venv/
+venv/
+ENV/
+
+# Логи и системные файлы Windows/macOS
+*.log
+.DS_Store
+Thumbs.db
