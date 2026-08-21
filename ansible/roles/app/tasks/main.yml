@@ -1,0 +1,39 @@
+---
+- name: Create project directory /opt/simple-app
+  file:
+    path: /opt/simple-app
+    state: directory
+    mode: '0755'
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+
+- name: Copy project files to server
+  synchronize:
+    src: "../"
+    dest: /opt/simple-app/
+    rsync_opts:
+      - "--exclude=.git"
+      - "--exclude=__pycache__"
+      - "--exclude=.pytest_cache"
+
+- name: Start application via Docker Compose
+  docker_compose_v2:
+    project_src: /opt/simple-app
+    state: present
+    build: always
+  register: compose_output
+
+- name: Check that container is running
+  assert:
+    that:
+      - "compose_output.services.app.simple_app_container.state.running == true"
+    fail_msg: "Container is not running!"
+
+- name: Wait for Health Endpoint to respond 200 OK
+  uri:
+    url: "http://localhost:5000/health"
+    status_code: 200
+  retries: 6
+  delay: 5
+  register: result
+  until: result.status == 200

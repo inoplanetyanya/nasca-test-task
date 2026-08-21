@@ -1,0 +1,43 @@
+---
+- name: Update apt cache and install required system packages
+  apt:
+    update_cache: yes
+    pkg:
+      - apt-transport-https
+      - ca-certificates
+      - curl
+      - software-properties-common
+      - gnupg
+    state: present
+
+- name: Add Docker GPG apt Key
+  apt_key:
+    url: https://docker.com
+    state: present
+
+- name: Add Docker Repository
+  apt_repository:
+    repo: "deb [arch=amd64] https://docker.com {{ ansible_distribution_release }} stable"
+    state: present
+
+- name: Install Docker CE and Docker Compose plugin
+  apt:
+    update_cache: yes
+    pkg:
+      - docker-ce
+      - docker-ce-cli
+      - containerd.io
+      - docker-compose-plugin
+    state: present
+
+- name: Ensure Docker service is started and enabled
+  systemd:
+    name: docker
+    state: started
+    enabled: yes
+
+- name: Add remote user to docker group
+  user:
+    name: "{{ ansible_user }}"
+    groups: docker
+    append: yes
