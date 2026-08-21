@@ -16,6 +16,8 @@ RUN pip install --no-cache-dir --user -r requirements.txt
 # --- Этап 2: Финальный легковесный образ ---
 FROM python:3.12-slim AS runner
 
+ARG APP_PORT
+
 RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     && rm -rf /var/lib/apt/lists/*
@@ -30,6 +32,7 @@ COPY --from=builder /root/.local /home/appuser/.local
 COPY app/ /app/
 
 # Настройка переменных окружения Python
+ENV APP_PORT=${APP_PORT}
 ENV PATH=/home/appuser/.local/bin:$PATH
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
@@ -44,5 +47,5 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
 # Переключаемся на безопасного пользователя
 USER appuser
 
-# Запуск через gunicorn с uvicorn-воркерами на порту 5000
-CMD ["gunicorn", "main:app", "--workers", "4", "--worker-class", "uvicorn.workers.UvicornWorker", "--bind", "0.0.0.0:5000"]
+# Запуск через gunicorn с uvicorn-воркерами
+CMD gunicorn main:app --workers 4 --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:${APP_PORT}
