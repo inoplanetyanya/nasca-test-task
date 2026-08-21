@@ -18,6 +18,7 @@ services:
         # Для FastAPI
       - APP_ENV=${APP_ENV}
       - PYTHONUNBUFFERED=${PYTHONUNBUFFERED}
+      - APP_PORT=${CONTAINER_PORT}
     volumes:
       - ./scripts/server-info.sh:/app/server-info.sh:ro
     healthcheck:
