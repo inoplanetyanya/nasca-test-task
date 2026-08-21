@@ -10,11 +10,13 @@ endif
 # Кроссплатформенное определение путей к виртуальному окружению (Windows vs Linux)
 ifeq ($(OS),Windows_NT)
     VENV_BIN = .venv/Scripts
+    SYS_PYTHON = python
     PYTHON = $(VENV_BIN)/python.exe
     PIP = $(VENV_BIN)/pip.exe
     UVICORN = $(VENV_BIN)/uvicorn.exe
 else
     VENV_BIN = .venv/bin
+    SYS_PYTHON = python3
     PYTHON = $(VENV_BIN)/python
     PIP = $(VENV_BIN)/pip
     UVICORN = $(VENV_BIN)/uvicorn
@@ -27,18 +29,18 @@ help: ## Показать все команды
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2}'
 
 install: ## Установить зависимости Python
-	python -m venv .venv
+	$(SYS_PYTHON) -m venv .venv
 	$(PYTHON) -m pip install --upgrade pip
 	$(PIP) install -r app/requirements.txt
 	@echo "Окружение создано успешно."
 
-lint: install ## Проверить качество кода (ruff для Python, shellcheck для Bash)
+lint: ## Проверить качество кода (ruff для Python, shellcheck для Bash)
 	@echo "=== Линтинг Python (ruff) ==="
 	$(PYTHON) -m ruff check app/ $(ARGS)
 	@echo "=== Линтинг Bash (shellcheck) ==="
 	docker run --rm -v "$(CURDIR)":/apps -w /apps koalaman/shellcheck scripts/server-info.sh
 
-test: install ## Запустить автоматические тесты
+test: ## Запустить автоматические тесты
 	PYTHONPATH=. $(PYTHON) -m pytest
 
 run: ## Запустить приложение локально на хосте (разработка)
