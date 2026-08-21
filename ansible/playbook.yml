@@ -1,0 +1,8 @@
+---
+- name: Deploy Simple App to Ubuntu Server
+  hosts: webservers
+  become: true  # Означает выполнять команды от имени root (через sudo)
+
+  roles:
+    - docker  # Сначала устанавливаем Docker на чистый сервер
+    - app     # Затем деплоим наше приложение
